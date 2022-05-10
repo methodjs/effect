@@ -1,2 +1,1 @@
-"use strict";
-console.log('Hello effect.');
+export { createEffect } from './core/createEffect';

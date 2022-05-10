@@ -1,7 +1,6 @@
-import { __awaiter, __generator, __assign } from 'tslib';
-import { createStore, createBehavior } from '@methodjs/store';
+import { __assign, __awaiter, __generator } from "tslib";
+import { createBehavior, createStore } from '@methodjs/store';
 import React from 'react';
-
 function initializeEffectState() {
     return {
         isLoading: false,
@@ -11,7 +10,7 @@ function initializeEffectState() {
         error: null,
     };
 }
-function createEffect(effect, options) {
+export function createEffect(effect, options) {
     var initializeStore = options.initializeStore, _a = options.isPreventReact, isPreventReact = _a === void 0 ? false : _a, _b = options.isPreventCache, isPreventCache = _b === void 0 ? false : _b, _c = options.reactDependecies, reactDependecies = _c === void 0 ? [] : _c, cacheLifeSeconds = options.cacheLifeSeconds, key = options.key;
     var _d = createStore(initializeStore, {
         key: key,
@@ -95,5 +94,3 @@ function createEffect(effect, options) {
     };
     return [useEffect, requestEffect, getEffect];
 }
-
-export { createEffect };

@@ -1,4 +1,4 @@
-import { createStore } from '@methodjs/store';
+import { createBehavior, createStore } from '@methodjs/store';
 import React from 'react';
 
 export interface Effect<T> {
@@ -26,8 +26,10 @@ export interface GetEffect<T> {
 }
 
 export interface CreateEffectOptions<T> {
-  intializeEffect: () => T;
-  requestWhenMounted: boolean;
+  initializeStore: () => T;
+  isPreventReact?: boolean;
+  isPreventCache?: boolean;
+  reactDependecies?: string[];
   cacheLifeSeconds?: number;
   key?: string;
 }
@@ -44,24 +46,69 @@ function initializeEffectState(): EffectState {
 
 export function createEffect<T>(
   effect: Effect<T>,
-  initializeEffect: InitializeEffect<T>,
+  options: CreateEffectOptions<T>,
 ): [UseEffect<T>, RequestEffect, GetEffect<T>] {
-  const [useStore, setStore, getStore] = createStore<T>(initializeEffect);
+  const {
+    initializeStore,
+    isPreventReact = false,
+    isPreventCache = false,
+    reactDependecies = [],
+    cacheLifeSeconds,
+    key,
+  } = options;
+  const [useStore, setStore, getStore] = createStore<T>(initializeStore, {
+    key,
+  });
   const [useState, setState, getState] = createStore<EffectState>(
     initializeEffectState,
   );
 
-  const requestEffect: RequestEffect = async function requestEffect(
-    notUsedCache = false,
-  ) {
-    if (getState().isLoading) {
+  const requestEffect: RequestEffect = async function requestEffect() {
+    coreRequestEffect(true);
+  };
+
+  async function coreRequestEffect(notUsedCache: boolean = false) {
+    const { cachedTime, isLoading } = getState();
+    if (isLoading) {
       return;
     }
     setState(value => ({ ...value, isLoading: true }));
+    if (
+      notUsedCache !== true &&
+      isPreventCache !== true &&
+      cachedTime !== null &&
+      cacheLifeSeconds !== undefined
+    ) {
+      const cacheLimitTime = new Date(Date.now() + cacheLifeSeconds * 1000);
+      if (cacheLimitTime > new Date()) {
+        setState(value => ({
+          ...value,
+          error: null,
+          isLoading: false,
+          isFromCache: true,
+        }));
+      }
+      return;
+    }
     try {
       const store = await effect();
       setStore(store);
-      setState(value => ({ ...value, error: null, isLoading: false }));
+      if (isPreventCache === true) {
+        setState(value => ({
+          ...value,
+          error: null,
+          isLoading: false,
+          isFromCache: false,
+        }));
+      } else {
+        setState(value => ({
+          ...value,
+          error: null,
+          isLoading: false,
+          cachedTime: new Date(),
+          isFromCache: false,
+        }));
+      }
     } catch (error) {
       setState(value => ({
         ...value,
@@ -70,7 +117,18 @@ export function createEffect<T>(
         isLoading: false,
       }));
     }
-  };
+  }
+
+  const [startReact] = createBehavior(
+    key => {
+      return reactDependecies.includes(key);
+    },
+    {
+      setValueCallback: () => {
+        coreRequestEffect(true);
+      },
+    },
+  );
 
   const getEffect: GetEffect<T> = function getEffect() {
     const store = getStore();
@@ -82,7 +140,12 @@ export function createEffect<T>(
     const store = useStore();
     const state = useState();
 
-    React.useEffect(() => {}, []);
+    React.useEffect(() => {
+      if (isPreventReact !== true) {
+        coreRequestEffect();
+        startReact();
+      }
+    }, []);
 
     return [store, state];
   };
