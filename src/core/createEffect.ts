@@ -2,7 +2,7 @@ import { createBehavior, createStore } from '@methodjs/store';
 import React from 'react';
 
 export interface Effect<T> {
-  (): Promise<T>;
+  (old: T): Promise<T>;
 }
 
 export interface EffectState {
@@ -91,7 +91,7 @@ export function createEffect<T>(
       return;
     }
     try {
-      const store = await effect();
+      const store = await effect(getStore());
       setStore(store);
       if (isPreventCache === true) {
         setState(value => ({

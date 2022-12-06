@@ -49,7 +49,7 @@ export function createEffect(effect, options) {
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, effect()];
+                        return [4 /*yield*/, effect(getStore())];
                     case 2:
                         store = _b.sent();
                         setStore(store);

@@ -1,5 +1,5 @@
 export interface Effect<T> {
-    (): Promise<T>;
+    (old: T): Promise<T>;
 }
 export interface EffectState {
     isLoading: boolean;

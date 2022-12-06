@@ -1,6 +1,6 @@
 {
   "name": "@methodjs/effect",
-  "version": "0.0.01",
+  "version": "0.0.2",
   "description": "Effect Manage Library used by store.",
   "main": "index.js",
   "scripts": {
@@ -30,7 +30,7 @@
   "contributors": [
     "eunho@hellomethod.io"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/methodjs/effect/issues"
   },
